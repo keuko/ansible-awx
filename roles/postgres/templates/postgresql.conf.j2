@@ -1,0 +1,14 @@
+ssl = on
+ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
+ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil.key'
+max_wal_size = 1GB
+min_wal_size = 80MB
+log_timezone = 'Etc/UTC'
+stats_temp_directory = '/var/run/postgresql/12-main.pg_stat_tmp'
+datestyle = 'iso, mdy'
+timezone = 'Etc/UTC'
+default_text_search_config = 'pg_catalog.english'
+listen_address = {{ ansible_default_ipv4.address }}
+wal_level = hot_standby
+max_wal_senders = {{ groups['postgres'] | length }}
+wal_keep_segments = 10
