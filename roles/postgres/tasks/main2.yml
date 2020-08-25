@@ -1,0 +1,42 @@
+---
+
+- name: debug
+  debug:
+    msg: " {{ groups['postgres']}}"
+
+- name: Download and import apt key
+  apt_key:
+    state: present
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+- name: Add postgres sources list
+  template:
+    src: postgres.list.j2
+    dest: /etc/apt/sources.list.d/postgres.list
+    mode: 0644
+
+- name: Install postgresql
+  apt:
+    update_cache: yes
+    state: present
+    name: postgresql
+
+- name: Get PostgreSQL version
+  shell: psql --version  | awk -F ' ' '{print $3}'
+  changed_when: no
+  check_mode: no
+  register: pgsql_version_check
+  tags:
+    - always
+
+- name: Set PGSQL version
+  set_fact:
+    pgsql_version: "{{ pgsql_version_check.stdout }}"
+  tags:
+    - always
+
+#
+#- name: Install configuration file
+#  template:
+#    src: postgresql.conf.j2
+#    dest: /etc/postgresql/12/main/postgresql.conf

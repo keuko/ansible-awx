@@ -1,0 +1,8 @@
+pgsqlrep_etc_path:
+  '12': /etc/postgresql/{{ pgsql_major_version }}/main
+
+pgsqlrep_data_path:
+  '12': /var/lib/postgresql/{{ pgsql_major_version }}/main
+
+pgsql_service_name:
+  '12': postgresql

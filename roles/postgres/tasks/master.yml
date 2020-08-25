@@ -1,0 +1,27 @@
+- name: Configure master server
+  template:
+    src: postgres.conf.j2
+    dest: "{{ pgsqlrep_etc_path[pgsql_major_version] }}/postgresql.conf"
+    group: postgres
+    owner: postgres
+    mode: 0644
+  notify: restart postgresql
+
+- name: Create replication user account
+  postgresql_user:
+    name: "{{ pgsqlrep_user }}"
+    role_attr_flags: LOGIN,REPLICATION
+  become: yes
+  become_user: postgres
+
+- name: Add trust in pg_hba.conf
+  lineinfile:
+    state: present
+    dest: "{{ pgsqlrep_etc_path[pgsql_major_version] }}/pg_hba.conf"
+    regexp: 'host.*replication.*{{ item }}/32.*trust'
+    line: 'host    replication    {{ pgsqlrep_user }}  {{ item }}/32 trust'
+  loop: "{{ pgsqlrep_replica_address }}"
+  notify: restart postgresql
+
+- name: Force all notified handlers to run at this point, not waiting for normal sync points
+  meta: flush_handlers

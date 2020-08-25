@@ -1,0 +1,42 @@
+- name: stat replication_setup_done
+  stat:
+    path: "{{ pgsqlrep_data_path[pgsql_major_version] }}/replication_setup_done"
+  register: replication_setup_done
+
+- name: stop postgresql
+  service:
+    name: "{{ pgsql_service_name[pgsql_major_version] }}"
+    state: stopped
+  when: not replication_setup_done.stat.exists
+
+- name: Clear out data directory
+  file:
+    path: "{{ pgsqlrep_data_path[pgsql_major_version] }}"
+    state: absent
+  when: not replication_setup_done.stat.exists
+
+- name: Configure replica server
+  template:
+    src: postgres.conf.j2
+    dest: "{{ pgsqlrep_etc_path[pgsql_major_version] }}/postgresql.conf"
+    group: postgres
+    owner: postgres
+    mode: 0644
+  notify: restart postgresql
+
+- name: Wait for port 5432 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+    port: 5432
+    host: "{{ pgsqlrep_master_address }}"
+    delay: 10
+    state: started
+
+- name: Create base backup
+  shell: |
+    pg_basebackup -h {{ pgsqlrep_master_address }} -U {{ pgsqlrep_user }} -p 5432 -D {{ pgsqlrep_data_path[pgsql_major_version] }}  -Fp -Xs -P -R
+    touch {{ pgsqlrep_data_path[pgsql_major_version] }}/replication_setup_done
+  args:
+    creates: "{{ pgsqlrep_data_path[pgsql_major_version] }}/replication_setup_done"
+  become: yes
+  become_user: postgres
+

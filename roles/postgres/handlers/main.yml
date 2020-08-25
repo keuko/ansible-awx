@@ -1,0 +1,9 @@
+- name: restart postgresql
+  service:
+    name: "{{ pgsql_service_name[pgsql_major_version] }}"
+    state: restarted
+
+- name: stop postgresql
+  service:
+    name: "{{ pgsql_service_name[pgsql_major_version] }}"
+    state: stopped

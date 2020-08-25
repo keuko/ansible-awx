@@ -1,0 +1,18 @@
+- name: Download and import apt key
+  apt_key:
+    state: present
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+- name: Add postgres sources list
+  template:
+    src: postgres.list.j2
+    dest: /etc/apt/sources.list.d/postgres.list
+    mode: 0644
+
+- name: Install postgresql
+  apt:
+    update_cache: yes
+    state: present
+    name:
+      - postgresql
+      - python3-psycopg2

@@ -1,27 +1,19 @@
----
+- import_tasks: install.yml
+- import_tasks: pgsql_version.yml
 
-- name: debug
-  debug:
-    msg: " {{ groups['postgres']}}"
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_version }}.yml"
+        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+      paths:
+        - "{{ role_path }}/vars"
+  tags:
+    - always
 
-#- name: Download and import apt key
-#  apt_key:
-#    state: present
-#    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-#
-#- name: Add postgres sources list
-#  template:
-#    src: postgres.list.j2
-#    dest: /etc/apt/sources.list.d/postgres.list
-#    mode: 0644
-#
-#- name: Install postgresql
-#  apt:
-#    update_cache: yes
-#    state: present
-#    name: postgresql
-#
-#- name: Install configuration file
-#  template:
-#    src: postgresql.conf.j2
-#    dest: /etc/postgresql/12/main/postgresql.conf
+- include_tasks: "{{ pgsqlrep_role }}.yml"
+  when: pgsqlrep_role != 'skip'
